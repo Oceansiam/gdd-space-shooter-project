@@ -1,12 +1,14 @@
 package gdd.sprite;
 
 import static gdd.Global.*;
-import javax.swing.ImageIcon;
+import gdd.ImageUtil;
 
 public class Shot extends Sprite {
 
-    private static final int H_SPACE = 20;
-    private static final int V_SPACE = 1;
+    // Player sprite (rotated + scaled) is 30 wide x 45 tall.
+    // Spawn the shot at the player's right edge, vertically centered.
+    private static final int H_SPACE = 30;
+    private static final int V_SPACE = 21;
 
     public Shot() {
     }
@@ -18,15 +20,12 @@ public class Shot extends Sprite {
 
     private void initShot(int x, int y) {
 
-        var ii = new ImageIcon(IMG_SHOT);
-
-        // Scale the image to use the global scaling factor
-        var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
-                ii.getIconHeight() * SCALE_FACTOR, 
-                java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+        // Original art is a vertical beam; rotate clockwise so it is
+        // horizontal, then scale. Loaded synchronously to avoid the
+        // macOS getScaledInstance crash.
+        setImage(ImageUtil.loadRotatedScaled(IMG_SHOT, SCALE_FACTOR));
 
         setX(x + H_SPACE);
-        setY(y - V_SPACE);
+        setY(y + V_SPACE);
     }
 }

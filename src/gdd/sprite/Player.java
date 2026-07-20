@@ -1,34 +1,28 @@
 package gdd.sprite;
 
 import static gdd.Global.*;
-import java.awt.Rectangle;
+import gdd.ImageUtil;
 import java.awt.event.KeyEvent;
-import javax.swing.ImageIcon;
 
 public class Player extends Sprite {
 
-    private static final int START_X = 270;
-    private static final int START_Y = 540;
-    private int width;
+    // Player now sits on the left edge and moves up/down.
+    private static final int START_X = 40;
     private int currentSpeed = 2;
-
-    private Rectangle bounds = new Rectangle(175,135,17,32);
 
     public Player() {
         initPlayer();
     }
 
     private void initPlayer() {
-        var ii = new ImageIcon(IMG_PLAYER);
-
-        // Scale the image to use the global scaling factor
-        var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
-                ii.getIconHeight() * SCALE_FACTOR,
-                java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+        // Original art points up; rotate clockwise so it faces right,
+        // then scale. Loaded synchronously to avoid the macOS
+        // getScaledInstance crash.
+        var img = ImageUtil.loadRotatedScaled(IMG_PLAYER, SCALE_FACTOR);
+        setImage(img);
 
         setX(START_X);
-        setY(START_Y);
+        setY(BOARD_HEIGHT / 2 - img.getHeight() / 2);
     }
 
     public int getSpeed() {
@@ -44,38 +38,40 @@ public class Player extends Sprite {
     }
 
     public void act() {
-        x += dx;
+        y += dy;
 
-        if (x <= 2) {
-            x = 2;
+        int height = getImage() != null ? getImage().getHeight(null) : 0;
+
+        if (y <= 2) {
+            y = 2;
         }
 
-        if (x >= BOARD_WIDTH - 2 * width) {
-            x = BOARD_WIDTH - 2 * width;
+        if (y >= BOARD_HEIGHT - height) {
+            y = BOARD_HEIGHT - height;
         }
     }
 
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
 
-        if (key == KeyEvent.VK_LEFT) {
-            dx = -currentSpeed;
+        if (key == KeyEvent.VK_UP) {
+            dy = -currentSpeed;
         }
 
-        if (key == KeyEvent.VK_RIGHT) {
-            dx = currentSpeed;
+        if (key == KeyEvent.VK_DOWN) {
+            dy = currentSpeed;
         }
     }
 
     public void keyReleased(KeyEvent e) {
         int key = e.getKeyCode();
 
-        if (key == KeyEvent.VK_LEFT) {
-            dx = 0;
+        if (key == KeyEvent.VK_UP) {
+            dy = 0;
         }
 
-        if (key == KeyEvent.VK_RIGHT) {
-            dx = 0;
+        if (key == KeyEvent.VK_DOWN) {
+            dy = 0;
         }
     }
 }

@@ -12,12 +12,16 @@ abstract public class Sprite {
     protected int x;
     protected int y;
     protected int dx;
+    protected int dy;
 
     public Sprite() {
         visible = true;
     }
 
-    abstract public void act();
+    // Default no-op: not every sprite needs autonomous per-frame movement
+    // (some, like Shot and Explosion, are driven directly by Scene1's update()).
+    public void act() {
+    }
 
     public boolean collidesWith(Sprite other) {
         if (other == null || !this.isVisible() || !other.isVisible()) {

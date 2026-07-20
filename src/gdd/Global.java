@@ -7,16 +7,17 @@ public class Global {
 
     public static final int SCALE_FACTOR = 3; // Scaling factor for sprites
 
-    public static final int BOARD_WIDTH = 716; // Doubled from 358
-    public static final int BOARD_HEIGHT = 700; // Doubled from 350
+    // Board is now landscape (wider than tall) for horizontal side-scrolling.
+    public static final int BOARD_WIDTH = 900;
+    public static final int BOARD_HEIGHT = 650;
     public static final int BORDER_RIGHT = 60; // Doubled from 30
     public static final int BORDER_LEFT = 10; // Doubled from 5
 
     public static final int GROUND = 580; // Doubled from 290
     public static final int BOMB_HEIGHT = 10; // Doubled from 5
 
-    public static final int ALIEN_HEIGHT = 24; // Doubled from 12
-    public static final int ALIEN_WIDTH = 24; // Doubled from 12
+    public static final int ALIEN_HEIGHT = 12 * SCALE_FACTOR; // matches scaled sprite (36)
+    public static final int ALIEN_WIDTH = 12 * SCALE_FACTOR; // matches scaled sprite (36)
     public static final int ALIEN_INIT_X = 300; // Doubled from 150
     public static final int ALIEN_INIT_Y = 10; // Doubled from 5
     public static final int ALIEN_GAP = 30; // Gap between aliens

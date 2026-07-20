@@ -109,19 +109,21 @@ public class Scene1 extends JPanel {
 
     private void loadSpawnDetails() {
         // TODO load this from a file
-        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", 100, 0));
-        spawnMap.put(200, new SpawnDetails("Alien1", 200, 0));
-        spawnMap.put(300, new SpawnDetails("Alien1", 300, 0));
+        // Enemies/power-ups now enter from the right edge (x = BOARD_WIDTH)
+        // and their varying coordinate is the vertical (y) position.
+        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 100));
+        spawnMap.put(200, new SpawnDetails("Alien1", BOARD_WIDTH, 200));
+        spawnMap.put(300, new SpawnDetails("Alien1", BOARD_WIDTH, 300));
 
-        spawnMap.put(400, new SpawnDetails("Alien1", 400, 0));
-        spawnMap.put(401, new SpawnDetails("Alien1", 450, 0));
-        spawnMap.put(402, new SpawnDetails("Alien1", 500, 0));
-        spawnMap.put(403, new SpawnDetails("Alien1", 550, 0));
+        spawnMap.put(400, new SpawnDetails("Alien1", BOARD_WIDTH, 400));
+        spawnMap.put(401, new SpawnDetails("Alien1", BOARD_WIDTH, 450));
+        spawnMap.put(402, new SpawnDetails("Alien1", BOARD_WIDTH, 500));
+        spawnMap.put(403, new SpawnDetails("Alien1", BOARD_WIDTH, 550));
 
-        spawnMap.put(500, new SpawnDetails("Alien1", 100, 0));
-        spawnMap.put(501, new SpawnDetails("Alien1", 150, 0));
-        spawnMap.put(502, new SpawnDetails("Alien1", 200, 0));
-        spawnMap.put(503, new SpawnDetails("Alien1", 350, 0));
+        spawnMap.put(500, new SpawnDetails("Alien1", BOARD_WIDTH, 100));
+        spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH, 150));
+        spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH, 200));
+        spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH, 350));
     }
 
     private void initBoard() {
@@ -171,34 +173,33 @@ public class Scene1 extends JPanel {
     }
 
     private void drawMap(Graphics g) {
-        // Draw scrolling starfield background
+        // Draw scrolling starfield background, scrolling right-to-left
 
         // Calculate smooth scrolling offset (1 pixel per frame)
-        int scrollOffset = (frame) % BLOCKHEIGHT;
+        int scrollOffset = (frame) % BLOCKWIDTH;
 
-        // Calculate which rows to draw based on screen position
-        int baseRow = (frame) / BLOCKHEIGHT;
-        int rowsNeeded = (BOARD_HEIGHT / BLOCKHEIGHT) + 2; // +2 for smooth scrolling
+        // Calculate which columns to draw based on screen position
+        int baseCol = (frame) / BLOCKWIDTH;
+        int colsNeeded = (BOARD_WIDTH / BLOCKWIDTH) + 2; // +2 for smooth scrolling
 
-        // Loop through rows that should be visible on screen
-        for (int screenRow = 0; screenRow < rowsNeeded; screenRow++) {
-            // Calculate which MAP row to use (with wrapping)
-            int mapRow = (baseRow + screenRow) % MAP.length;
+        // Loop through columns that should be visible on screen
+        for (int screenCol = 0; screenCol < colsNeeded; screenCol++) {
+            // Calculate which MAP entry to use (with wrapping)
+            int mapCol = (baseCol + screenCol) % MAP.length;
 
-            // Calculate Y position for this row
-            // int y = (screenRow * BLOCKHEIGHT) - scrollOffset;
-            int y = BOARD_HEIGHT - ( (screenRow * BLOCKHEIGHT) - scrollOffset );
+            // Calculate X position for this column (new stars enter from the right)
+            int x = BOARD_WIDTH - ((screenCol * BLOCKWIDTH) - scrollOffset);
 
-            // Skip if row is completely off-screen
-            if (y > BOARD_HEIGHT || y < -BLOCKHEIGHT) {
+            // Skip if column is completely off-screen
+            if (x > BOARD_WIDTH || x < -BLOCKWIDTH) {
                 continue;
             }
 
-            // Draw each column in this row
-            for (int col = 0; col < MAP[mapRow].length; col++) {
-                if (MAP[mapRow][col] == 1) {
-                    // Calculate X position
-                    int x = col * BLOCKWIDTH;
+            // Draw each row in this column
+            for (int row = 0; row < MAP[mapCol].length; row++) {
+                if (MAP[mapCol][row] == 1) {
+                    // Calculate Y position
+                    int y = row * BLOCKHEIGHT;
 
                     // Draw a cluster of stars
                     drawStarCluster(g, x, y, BLOCKWIDTH, BLOCKHEIGHT);
@@ -446,8 +447,7 @@ public class Scene1 extends JPanel {
                             && shotY >= (enemyY)
                             && shotY <= (enemyY + ALIEN_HEIGHT)) {
 
-                        var ii = new ImageIcon(IMG_EXPLOSION);
-                        enemy.setImage(ii.getImage());
+                        enemy.setImage(gdd.ImageUtil.loadScaled(IMG_EXPLOSION, SCALE_FACTOR));
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemyX, enemyY));
                         deaths++;
@@ -456,15 +456,14 @@ public class Scene1 extends JPanel {
                     }
                 }
 
-                int y = shot.getY();
-                // y -= 4;
-                y -= 20;
+                int x = shot.getX();
+                x += 20;
 
-                if (y < 0) {
+                if (x > BOARD_WIDTH) {
                     shot.die();
                     shotsToRemove.add(shot);
                 } else {
-                    shot.setY(y);
+                    shot.setX(x);
                 }
             }
         }
