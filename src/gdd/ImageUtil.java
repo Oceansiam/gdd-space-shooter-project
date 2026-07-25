@@ -54,12 +54,48 @@ public final class ImageUtil {
 
     /** Rotate an image 90 degrees clockwise (e.g. up-facing art becomes right-facing). */
     public static BufferedImage rotateClockwise(BufferedImage src) {
+        return rotate(src, 90);
+    }
+
+    /**
+     * Rotate an image by a multiple of 90 degrees: 0 (none), 90 (clockwise),
+     * 180, or 270 (= 90 counter-clockwise). Use this when swapping in a new
+     * sprite: check which way the source art is already facing and pick
+     * whichever angle turns it to face right (the direction ships/bullets
+     * travel in this game).
+     *   - art already faces right  -> 0
+     *   - art faces up             -> 90
+     *   - art faces left           -> 180
+     *   - art faces down           -> 270
+     */
+    public static BufferedImage rotate(BufferedImage src, int degrees) {
+        degrees = ((degrees % 360) + 360) % 360; // normalize to 0-270
+
+        if (degrees == 0) {
+            return src;
+        }
+
         int w = src.getWidth();
         int h = src.getHeight();
-        BufferedImage out = new BufferedImage(h, w, BufferedImage.TYPE_INT_ARGB);
+        boolean swapDimensions = (degrees == 90 || degrees == 270);
+        BufferedImage out = new BufferedImage(
+                swapDimensions ? h : w,
+                swapDimensions ? w : h,
+                BufferedImage.TYPE_INT_ARGB);
+
         Graphics2D g = out.createGraphics();
-        g.translate(h, 0);
-        g.rotate(Math.PI / 2);
+        switch (degrees) {
+            case 90:
+                g.translate(h, 0);
+                break;
+            case 180:
+                g.translate(w, h);
+                break;
+            case 270:
+                g.translate(0, w);
+                break;
+        }
+        g.rotate(Math.toRadians(degrees));
         g.drawImage(src, 0, 0, null);
         g.dispose();
         return out;
@@ -68,6 +104,11 @@ public final class ImageUtil {
     /** Convenience: load, rotate clockwise, then scale. */
     public static BufferedImage loadRotatedScaled(String path, int factor) {
         return scale(rotateClockwise(load(path)), factor);
+    }
+
+    /** Convenience: load, rotate by the given angle (0/90/180/270), then scale. */
+    public static BufferedImage loadRotatedScaled(String path, int factor, int degrees) {
+        return scale(rotate(load(path), degrees), factor);
     }
 
     /** Convenience: load then scale. */

@@ -8,6 +8,7 @@ import java.util.Scanner;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -23,12 +24,19 @@ public class AudioPlayer {
     AudioInputStream audioInputStream;
     String filePath;
 
+    // Whether this clip should loop continuously (background music) or
+    // play once and stop on its own (one-shot sound effects, e.g. shot.wav).
+    private final boolean loop;
+
     // constructor to initialize streams and clip
-    public AudioPlayer(String filePath)
+    // loop=true  -> background music, repeats forever until stop()/close()
+    // loop=false -> one-shot sound effect, plays once and self-closes
+    public AudioPlayer(String filePath, boolean loop)
             throws UnsupportedAudioFileException,
             IOException, LineUnavailableException {
         // create AudioInputStream object
         this.filePath = filePath;
+        this.loop = loop;
         audioInputStream
                 = AudioSystem.getAudioInputStream(new File(filePath).getAbsoluteFile());
 
@@ -38,13 +46,25 @@ public class AudioPlayer {
         // open audioInputStream to the clip
         clip.open(audioInputStream);
 
-        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        if (loop) {
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        } else {
+            // One-shot: release the audio line automatically once playback
+            // reaches the end, so firing many shots in a row doesn't leak
+            // open Clip lines (the OS only allows a limited number at once).
+            clip.addLineListener(event -> {
+                if (event.getType() == LineEvent.Type.STOP
+                        && clip.getMicrosecondPosition() >= clip.getMicrosecondLength()) {
+                    clip.close();
+                }
+            });
+        }
     }
 
     public static void main(String[] args) {
         try {
             String filePath = "src/audio/title.wav";
-            AudioPlayer audioPlayer = new AudioPlayer(filePath);
+            AudioPlayer audioPlayer = new AudioPlayer(filePath, true);
 
             audioPlayer.play();
             Scanner sc = new Scanner(System.in);
@@ -170,7 +190,9 @@ public class AudioPlayer {
         audioInputStream = AudioSystem.getAudioInputStream(
                 new File(filePath).getAbsoluteFile());
         clip.open(audioInputStream);
-        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        if (loop) {
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        }
     }
 
 }

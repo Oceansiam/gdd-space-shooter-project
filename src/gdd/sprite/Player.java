@@ -15,10 +15,11 @@ public class Player extends Sprite {
     }
 
     private void initPlayer() {
-        // Original art points up; rotate clockwise so it faces right,
-        // then scale. Loaded synchronously to avoid the macOS
-        // getScaledInstance crash.
-        var img = ImageUtil.loadRotatedScaled(IMG_PLAYER, SCALE_FACTOR);
+        // Rotates by whatever PLAYER_IMAGE_ROTATION is set to in Global.java,
+        // so swapping IMG_PLAYER for a different sprite is a one-constant
+        // change instead of a code change. Loaded synchronously to avoid
+        // the macOS getScaledInstance crash.
+        var img = ImageUtil.loadRotatedScaled(IMG_PLAYER, SCALE_FACTOR, PLAYER_IMAGE_ROTATION);
         setImage(img);
 
         setX(START_X);
@@ -38,9 +39,19 @@ public class Player extends Sprite {
     }
 
     public void act() {
+        x += dx;
         y += dy;
 
+        int width = getImage() != null ? getImage().getWidth(null) : 0;
         int height = getImage() != null ? getImage().getHeight(null) : 0;
+
+        if (x <= 2) {
+            x = 2;
+        }
+
+        if (x >= BOARD_WIDTH - width) {
+            x = BOARD_WIDTH - width;
+        }
 
         if (y <= 2) {
             y = 2;
@@ -61,6 +72,14 @@ public class Player extends Sprite {
         if (key == KeyEvent.VK_DOWN) {
             dy = currentSpeed;
         }
+
+        if (key == KeyEvent.VK_LEFT) {
+            dx = -currentSpeed;
+        }
+
+        if (key == KeyEvent.VK_RIGHT) {
+            dx = currentSpeed;
+        }
     }
 
     public void keyReleased(KeyEvent e) {
@@ -72,6 +91,14 @@ public class Player extends Sprite {
 
         if (key == KeyEvent.VK_DOWN) {
             dy = 0;
+        }
+
+        if (key == KeyEvent.VK_LEFT) {
+            dx = 0;
+        }
+
+        if (key == KeyEvent.VK_RIGHT) {
+            dx = 0;
         }
     }
 }

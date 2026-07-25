@@ -70,7 +70,7 @@ public class TitleScene extends JPanel {
     private void initAudio() {
         try {
             String filePath = "src/audio/title.wav";
-            audioPlayer = new AudioPlayer(filePath);
+            audioPlayer = new AudioPlayer(filePath, true);
 
             audioPlayer.play();
         } catch (Exception e) {

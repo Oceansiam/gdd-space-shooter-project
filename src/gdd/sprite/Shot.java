@@ -1,5 +1,6 @@
 package gdd.sprite;
 
+import gdd.AudioPlayer;
 import static gdd.Global.*;
 import gdd.ImageUtil;
 
@@ -9,6 +10,7 @@ public class Shot extends Sprite {
     // Spawn the shot at the player's right edge, vertically centered.
     private static final int H_SPACE = 30;
     private static final int V_SPACE = 21;
+    AudioPlayer audioPlayer;
 
     public Shot() {
     }
@@ -16,6 +18,14 @@ public class Shot extends Sprite {
     public Shot(int x, int y) {
 
         initShot(x, y);
+        try {
+            audioPlayer = new AudioPlayer("src/audio/shot.wav", false);
+            audioPlayer.play();
+        } 
+        catch (Exception ex) {
+            System.out.println("Error with playing sound.");
+            ex.printStackTrace();
+        }
     }
 
     private void initShot(int x, int y) {

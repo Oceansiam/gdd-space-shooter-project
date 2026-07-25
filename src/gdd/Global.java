@@ -24,6 +24,10 @@ public class Global {
 
     public static final int GO_DOWN = 30; // Doubled from 15
     public static final int NUMBER_OF_ALIENS_TO_DESTROY = 24;
+
+    // Odds (1 in N) that any given visible enemy fires at the player on a
+    // given frame. Higher = rarer shots.
+    public static final int ENEMY_FIRE_CHANCE = 150;
     public static final int CHANCE = 5;
     public static final int DELAY = 17;
     public static final int PLAYER_WIDTH = 30; // Doubled from 15
@@ -31,9 +35,19 @@ public class Global {
 
     // Images
     public static final String IMG_ENEMY = "src/images/alien.png";
-    public static final String IMG_PLAYER = "src/images/player.png";
-    public static final String IMG_SHOT = "src/images/shot.png";
+    public static final String IMG_PLAYER = "src/images/Sega_Genesis___Zero_Wing___Playable_Char_03_32x27.png";
+
+    // Which way IMG_PLAYER's art already faces, so it can be turned to face
+    // right (the direction the ship travels). Change this whenever you swap
+    // IMG_PLAYER for a different sprite:
+    //   0   = art already faces right (no rotation) - e.g. this ZIG-01 pose
+    //   90  = art faces up                          - e.g. the original player.png
+    //   180 = art faces left
+    //   270 = art faces down
+    public static final int PLAYER_IMAGE_ROTATION = 0;
+    public static final String IMG_SHOT = "src/images/Sega_Genesis___Zero_Wing___Playable_Shot_23_20x16.png";
     public static final String IMG_EXPLOSION = "src/images/explosion.png";
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
+    public static final String IMG_BACKGROUND = "src/images/planet_background_level1.png";
 }

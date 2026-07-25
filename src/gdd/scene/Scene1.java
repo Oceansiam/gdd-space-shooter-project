@@ -8,6 +8,7 @@ import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Enemy;
+import gdd.sprite.EnemyShot;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
@@ -20,11 +21,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -35,8 +36,10 @@ public class Scene1 extends JPanel {
     private List<Enemy> enemies;
     private List<Explosion> explosions;
     private List<Shot> shots;
+    private List<EnemyShot> enemyShots;
     private Player player;
     // private Shot shot;
+    private BufferedImage backgroundImage;
 
     final int BLOCKHEIGHT = 50;
     final int BLOCKWIDTH = 50;
@@ -87,6 +90,7 @@ public class Scene1 extends JPanel {
 
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
+    private AudioPlayer gameOverAudioPlayer;
     private int lastRowToShow;
     private int firstRowToShow;
 
@@ -99,8 +103,8 @@ public class Scene1 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/scene1.wav";
-            audioPlayer = new AudioPlayer(filePath);
+            String filePath = "src/audio/4 - Burning Heat [Stage 1].wav";
+            audioPlayer = new AudioPlayer(filePath, true);
             audioPlayer.play();
         } catch (Exception e) {
             System.err.println("Error initializing audio player: " + e.getMessage());
@@ -160,6 +164,10 @@ public class Scene1 extends JPanel {
         powerups = new ArrayList<>();
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
+        enemyShots = new ArrayList<>();
+
+        // Loaded synchronously to avoid the macOS getScaledInstance crash.
+        backgroundImage = gdd.ImageUtil.load(IMG_BACKGROUND);
 
         // for (int i = 0; i < 4; i++) {
         // for (int j = 0; j < 6; j++) {
@@ -170,6 +178,38 @@ public class Scene1 extends JPanel {
         // }
         player = new Player();
         // shot = new Shot();
+    }
+
+    private void drawBackground(Graphics g) {
+        // Slow-scrolling nebula image behind the dot starfield, for depth.
+        if (backgroundImage == null) {
+            return;
+        }
+
+        int imgW = backgroundImage.getWidth();
+        int imgH = backgroundImage.getHeight();
+
+        // Scrolls slower than the dot starfield (drawMap uses 1px/frame) -
+        // the speed difference is what sells the sense of depth/parallax.
+        int scrollX = frame / 4;
+
+        // The image wasn't authored to tile with itself, so consecutive
+        // copies are alternately mirrored. A mirrored copy shares the exact
+        // same edge pixels as its neighbor, so the seam between repeats
+        // disappears instead of showing a hard cut.
+        int startTile = Math.floorDiv(scrollX, imgW) - 1;
+        int endTile = Math.floorDiv(scrollX + BOARD_WIDTH, imgW) + 1;
+
+        for (int tile = startTile; tile <= endTile; tile++) {
+            int x = tile * imgW - scrollX;
+            boolean flipped = Math.floorMod(tile, 2) != 0;
+
+            if (flipped) {
+                g.drawImage(backgroundImage, x + imgW, 0, x, imgH, 0, 0, imgW, imgH, null);
+            } else {
+                g.drawImage(backgroundImage, x, 0, x + imgW, imgH, 0, 0, imgW, imgH, null);
+            }
+        }
     }
 
     private void drawMap(Graphics g) {
@@ -264,6 +304,26 @@ public class Scene1 extends JPanel {
         }
     }
 
+    private void killPlayer() {
+        if (player.isDying() || !player.isVisible()) {
+            return; // already handled this frame
+        }
+        player.setImage(gdd.ImageUtil.loadScaled(IMG_EXPLOSION, SCALE_FACTOR));
+        player.setDying(true);
+        message = "Game Over";
+
+        try {
+            if (audioPlayer != null) {
+                audioPlayer.stop(); // stop the background gameplay music
+            }
+            gameOverAudioPlayer = new AudioPlayer("src/audio/Game Over.wav", false);
+            gameOverAudioPlayer.play();
+        } catch (Exception ex) {
+            System.out.println("Error with playing sound.");
+            ex.printStackTrace();
+        }
+    }
+
     private void drawPlayer(Graphics g) {
 
         if (player.isVisible()) {
@@ -284,6 +344,16 @@ public class Scene1 extends JPanel {
 
             if (shot.isVisible()) {
                 g.drawImage(shot.getImage(), shot.getX(), shot.getY(), this);
+            }
+        }
+    }
+
+    private void drawEnemyShots(Graphics g) {
+
+        for (EnemyShot enemyShot : enemyShots) {
+
+            if (enemyShot.isVisible()) {
+                g.drawImage(enemyShot.getImage(), enemyShot.getX(), enemyShot.getY(), this);
             }
         }
     }
@@ -328,19 +398,18 @@ public class Scene1 extends JPanel {
         g.setColor(Color.black);
         g.fillRect(0, 0, d.width, d.height);
 
-        g.setColor(Color.white);
-        g.drawString("FRAME: " + frame, 10, 10);
-
         g.setColor(Color.green);
 
         if (inGame) {
 
+            drawBackground(g); // Nebula image, slow parallax layer
             drawMap(g);  // Draw background stars first
             drawExplosions(g);
             drawPowreUps(g);
             drawAliens(g);
             drawPlayer(g);
             drawShot(g);
+            drawEnemyShots(g);
 
         } else {
 
@@ -351,6 +420,11 @@ public class Scene1 extends JPanel {
             gameOver(g);
         }
 
+        // Drawn last so the background image (which is fully opaque)
+        // never paints over it.
+        g.setColor(Color.white);
+        g.drawString("FRAME: " + frame, 10, 10);
+
         Toolkit.getDefaultToolkit().sync();
     }
 
@@ -360,9 +434,9 @@ public class Scene1 extends JPanel {
         g.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 
         g.setColor(new Color(0, 32, 48));
-        g.fillRect(50, BOARD_WIDTH / 2 - 30, BOARD_WIDTH - 100, 50);
+        g.fillRect(50, BOARD_HEIGHT / 2 - 30, BOARD_WIDTH - 100, 50);
         g.setColor(Color.white);
-        g.drawRect(50, BOARD_WIDTH / 2 - 30, BOARD_WIDTH - 100, 50);
+        g.drawRect(50, BOARD_HEIGHT / 2 - 30, BOARD_WIDTH - 100, 50);
 
         var small = new Font("Helvetica", Font.BOLD, 14);
         var fontMetrics = this.getFontMetrics(small);
@@ -370,7 +444,7 @@ public class Scene1 extends JPanel {
         g.setColor(Color.white);
         g.setFont(small);
         g.drawString(message, (BOARD_WIDTH - fontMetrics.stringWidth(message)) / 2,
-                BOARD_WIDTH / 2);
+                BOARD_HEIGHT / 2);
     }
 
     private void update() {
@@ -425,8 +499,36 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
+
+                // Ramming: touching an enemy ship kills the player.
+                if (player.isVisible() && player.collidesWith(enemy)) {
+                    killPlayer();
+                    enemy.setDying(true);
+                    explosions.add(new Explosion(enemy.getX(), enemy.getY()));
+                    deaths++;
+                }
+
+                // Enemies occasionally fire back toward the player.
+                if (player.isVisible() && randomizer.nextInt(ENEMY_FIRE_CHANCE) == 0) {
+                    enemyShots.add(new EnemyShot(enemy.getX(), enemy.getY() + ALIEN_HEIGHT / 2));
+                }
             }
         }
+
+        // Enemy shots: move them, remove off-screen ones, check player hits.
+        List<EnemyShot> enemyShotsToRemove = new ArrayList<>();
+        for (EnemyShot enemyShot : enemyShots) {
+            enemyShot.act();
+
+            if (!enemyShot.isVisible()) {
+                enemyShotsToRemove.add(enemyShot);
+            } else if (player.isVisible() && enemyShot.collidesWith(player)) {
+                killPlayer();
+                enemyShot.die();
+                enemyShotsToRemove.add(enemyShot);
+            }
+        }
+        enemyShots.removeAll(enemyShotsToRemove);
 
         // shot
         List<Shot> shotsToRemove = new ArrayList<>();
