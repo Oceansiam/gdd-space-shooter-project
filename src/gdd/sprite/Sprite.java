@@ -14,6 +14,14 @@ abstract public class Sprite {
     protected int dx;
     protected int dy;
 
+    // Optional frame-cycling animation. A sprite that never calls
+    // setAnimationFrames() behaves exactly as before (a single static
+    // image) - this is purely additive.
+    private Image[] animationFrames;
+    private int currentFrameIndex;
+    private int frameTickCounter;
+    private int ticksPerFrame;
+
     public Sprite() {
         visible = true;
     }
@@ -21,6 +29,36 @@ abstract public class Sprite {
     // Default no-op: not every sprite needs autonomous per-frame movement
     // (some, like Shot and Explosion, are driven directly by Scene1's update()).
     public void act() {
+    }
+
+    /**
+     * Configure this sprite to cycle through a sequence of frames instead of
+     * showing one static image. ticksPerFrame controls playback speed - how
+     * many calls to advanceAnimation() happen before moving to the next
+     * frame (higher = slower). Call advanceAnimation() once per game tick
+     * (e.g. from Scene1's update loop) to actually play it.
+     */
+    public void setAnimationFrames(Image[] frames, int ticksPerFrame) {
+        this.animationFrames = frames;
+        this.ticksPerFrame = Math.max(1, ticksPerFrame);
+        this.currentFrameIndex = 0;
+        this.frameTickCounter = 0;
+        if (frames != null && frames.length > 0) {
+            this.image = frames[0];
+        }
+    }
+
+    /** Advances the animation by one game tick. No-op if not animated. */
+    public void advanceAnimation() {
+        if (animationFrames == null || animationFrames.length < 2) {
+            return;
+        }
+        frameTickCounter++;
+        if (frameTickCounter >= ticksPerFrame) {
+            frameTickCounter = 0;
+            currentFrameIndex = (currentFrameIndex + 1) % animationFrames.length;
+            this.image = animationFrames[currentFrameIndex];
+        }
     }
 
     public boolean collidesWith(Sprite other) {
@@ -83,5 +121,13 @@ abstract public class Sprite {
 
     public boolean isDying() {
         return this.dying;
+    }
+
+    public int getDy() {
+        return dy;
+    }
+
+    public void setDy(int dy) {
+        this.dy = dy;
     }
 }

@@ -16,6 +16,11 @@ public class Global {
     public static final int GROUND = 580; // Doubled from 290
     public static final int BOMB_HEIGHT = 10; // Doubled from 5
 
+    // How fast a fired bomb travels (px/frame). Must be faster than the
+    // enemy's own movement speed (1px/frame) or it never visibly separates
+    // from the ship that fired it.
+    public static final int BOMB_SPEED = 10;
+
     public static final int ALIEN_HEIGHT = 12 * SCALE_FACTOR; // matches scaled sprite (36)
     public static final int ALIEN_WIDTH = 12 * SCALE_FACTOR; // matches scaled sprite (36)
     public static final int ALIEN_INIT_X = 300; // Doubled from 150
@@ -24,17 +29,30 @@ public class Global {
 
     public static final int GO_DOWN = 30; // Doubled from 15
     public static final int NUMBER_OF_ALIENS_TO_DESTROY = 24;
-
-    // Odds (1 in N) that any given visible enemy fires at the player on a
-    // given frame. Higher = rarer shots.
-    public static final int ENEMY_FIRE_CHANCE = 150;
     public static final int CHANCE = 5;
     public static final int DELAY = 17;
     public static final int PLAYER_WIDTH = 30; // Doubled from 15
     public static final int PLAYER_HEIGHT = 20; // Doubled from 10
 
     // Images
-    public static final String IMG_ENEMY = "src/images/alien.png";
+    public static final String IMG_ENEMY = "src/images/metroid_enemy.png";
+
+    // Which way IMG_ENEMY's art already faces - same idea as
+    // PLAYER_IMAGE_ROTATION below. This sprite is left-right symmetric
+    // (a top-down dome view), so 90 rotates it into a tall/narrow shape
+    // instead of trying to make it "face" a direction it doesn't have.
+    //   0 = no rotation, 90 = clockwise, 180 = upside down, 270 = counter-clockwise
+    public static final int ENEMY_IMAGE_ROTATION = 90;
+
+    // Frame-cycling animation for the enemy ship (pulsing/breathing effect
+    // from the original sprite sheet - doesn't change facing, just brings
+    // it to life). Files are frame_00.png .. frame_19.png.
+    public static final String IMG_ENEMY_ANIM_FOLDER = "src/images/metroid_enemy_anim/";
+    public static final int ENEMY_ANIM_FRAME_COUNT = 20;
+    public static final int ENEMY_ANIM_SPEED = 6; // game ticks per animation frame
+    public static final String IMG_ENEMY2 = "src/images/Sharp_X68000___Nemesis__94__Gradius_2____01_115x124.png";
+    public static final String IMG_ENEMY3 = "src/images/Sharp_X68000___Nemesis__94__Gradius_2____03_108x76.png";
+    public static final String IMG_BOSS = "";
     public static final String IMG_PLAYER = "src/images/Sega_Genesis___Zero_Wing___Playable_Char_03_32x27.png";
 
     // Which way IMG_PLAYER's art already faces, so it can be turned to face
@@ -49,5 +67,13 @@ public class Global {
     public static final String IMG_EXPLOSION = "src/images/explosion.png";
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
+    public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
     public static final String IMG_BACKGROUND = "src/images/planet_background_level1.png";
+
+    // Power-up progression
+    public static final int PLAYER_BASE_SPEED = 2;
+    public static final int SPEED_UP_STEP = 2; // pixels/frame added per Speed Up stage
+    public static final int SPEED_UP_MAX_LEVEL = 2; // 2 stages
+
+    public static final int SHOT_UP_MAX_LEVEL = 4; // 4 stages - up to 5 simultaneous bullets
 }

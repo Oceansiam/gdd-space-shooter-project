@@ -8,7 +8,9 @@ public class Player extends Sprite {
 
     // Player now sits on the left edge and moves up/down.
     private static final int START_X = 40;
-    private int currentSpeed = 2;
+    private int currentSpeed = PLAYER_BASE_SPEED;
+    private int speedLevel = 0;
+    private int shotLevel = 0;
 
     public Player() {
         initPlayer();
@@ -30,12 +32,27 @@ public class Player extends Sprite {
         return currentSpeed;
     }
 
-    public int setSpeed(int speed) {
-        if (speed < 1) {
-            speed = 1; // Ensure speed is at least 1
+    public int getSpeedLevel() {
+        return speedLevel;
+    }
+
+    /** Speed Up power-up: 2 stages, each adding SPEED_UP_STEP to the base speed. */
+    public void upgradeSpeed() {
+        if (speedLevel < SPEED_UP_MAX_LEVEL) {
+            speedLevel++;
+            currentSpeed = PLAYER_BASE_SPEED + speedLevel * SPEED_UP_STEP;
         }
-        this.currentSpeed = speed;
-        return currentSpeed;
+    }
+
+    public int getShotLevel() {
+        return shotLevel;
+    }
+
+    /** Multi-shot power-up: 4 stages, each adding one more simultaneous bullet. */
+    public void upgradeShot() {
+        if (shotLevel < SHOT_UP_MAX_LEVEL) {
+            shotLevel++;
+        }
     }
 
     public void act() {
