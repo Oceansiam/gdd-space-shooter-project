@@ -52,6 +52,7 @@ public class TitleScene extends JPanel {
     private final Rectangle startButton = new Rectangle(
             BOARD_WIDTH / 2 - 110, 420, 220, 64);
     private boolean hoveringStart = false;
+    private boolean listenersAdded = false;
 
     // Star positions/phases are precomputed once so the field twinkles in
     // place instead of re-randomizing (and jumping around) every frame.
@@ -75,9 +76,12 @@ public class TitleScene extends JPanel {
     }
 
     public void start() {
-        addKeyListener(new TAdapter());
-        addMouseListener(new MAdapter());
-        addMouseMotionListener(new MMAdapter());
+        if (!listenersAdded) {
+            addKeyListener(new TAdapter());
+            addMouseListener(new MAdapter());
+            addMouseMotionListener(new MMAdapter());
+            listenersAdded = true;
+        }
         setFocusable(true);
         requestFocusInWindow();
         setBackground(Color.black);

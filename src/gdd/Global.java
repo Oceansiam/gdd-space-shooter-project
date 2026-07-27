@@ -52,7 +52,7 @@ public class Global {
     public static final int ENEMY_ANIM_SPEED = 6; // game ticks per animation frame
     public static final String IMG_ENEMY2 = "src/images/Sharp_X68000___Nemesis__94__Gradius_2____01_115x124.png";
     public static final String IMG_ENEMY3 = "src/images/Sharp_X68000___Nemesis__94__Gradius_2____03_108x76.png";
-    public static final String IMG_BOSS = "";
+    public static final String IMG_BOSS = "src/images/boss_placeholder.png";
     public static final String IMG_PLAYER = "src/images/Sega_Genesis___Zero_Wing___Playable_Char_03_32x27.png";
 
     // Which way IMG_PLAYER's art already faces, so it can be turned to face
@@ -68,7 +68,21 @@ public class Global {
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
-    public static final String IMG_BACKGROUND = "src/images/planet_background_level1.png";
+    public static final String IMG_BACKGROUND = "src/images/planet_background_level1.png"; //stage 1
+    public static final String IMG_BACKGROUND2 = "src/images/background2.png"; // stage 2
+    public static final String IMG_BACKGROUND3 = "src/images/Nebula_background.png"; // stage 1 diff map
+    public static final String IMG_BACKGROUND4 = "src/images/background3.png"; // stage 2 dif map
+
+    // Boss (Stage 2 finale). Art is a placeholder - swap IMG_BOSS (above,
+    // near IMG_ENEMY2/IMG_ENEMY3) for something else whenever you're ready,
+    // and adjust BOSS_IMAGE_ROTATION to match (0/90/180/270, same convention
+    // as PLAYER_IMAGE_ROTATION and ENEMY_IMAGE_ROTATION).
+    public static final int BOSS_IMAGE_ROTATION = 0;
+    public static final int BOSS_MAX_HEALTH = 15; // hits required to destroy it
+    public static final int BOSS_STOP_X = 620; // where it stops entering and starts fighting
+    public static final int BOSS_BOB_SPEED = 2; // vertical px/frame while fighting
+    public static final int BOSS_BOB_TOP = 40;
+    public static final int BOSS_BOB_BOTTOM = 450;
 
     // Power-up progression
     public static final int PLAYER_BASE_SPEED = 2;

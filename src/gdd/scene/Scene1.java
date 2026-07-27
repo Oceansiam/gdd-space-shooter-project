@@ -68,8 +68,14 @@ public class Scene1 extends JPanel {
     private final Game game;
 
     private final Rectangle playAgainButton = new Rectangle(
-            BOARD_WIDTH / 2 - 110, BOARD_HEIGHT - 110, 220, 56);
+            BOARD_WIDTH / 2 - 230, BOARD_HEIGHT - 110, 200, 56);
     private boolean hoveringPlayAgain = false;
+
+    private final Rectangle quitButton = new Rectangle(
+            BOARD_WIDTH / 2 + 30, BOARD_HEIGHT - 110, 200, 56);
+    private boolean hoveringQuit = false;
+
+    private boolean listenersAdded = false;
 
     private int currentRow = -1;
     // TODO load this map from a file
@@ -165,9 +171,12 @@ public class Scene1 extends JPanel {
     }
 
     public void start() {
-        addKeyListener(new TAdapter());
-        addMouseListener(new MAdapter());
-        addMouseMotionListener(new MMAdapter());
+        if (!listenersAdded) {
+            addKeyListener(new TAdapter());
+            addMouseListener(new MAdapter());
+            addMouseMotionListener(new MMAdapter());
+            listenersAdded = true;
+        }
         setFocusable(true);
         requestFocusInWindow();
         setBackground(Color.black);
@@ -175,15 +184,20 @@ public class Scene1 extends JPanel {
         timer = new Timer(1000 / 60, new GameCycle());
         timer.start();
 
-        gameInit();
+        resetGameState();
         initAudio();
     }
 
     public void stop() {
-        timer.stop();
+        if (timer != null) {
+            timer.stop();
+        }
         try {
             if (audioPlayer != null) {
                 audioPlayer.stop();
+            }
+            if (gameOverAudioPlayer != null) {
+                gameOverAudioPlayer.stop();
             }
         } catch (Exception e) {
             System.err.println("Error closing audio player.");
@@ -505,47 +519,73 @@ public class Scene1 extends JPanel {
         g.setColor(won ? new Color(120, 230, 140) : new Color(230, 60, 50));
         g.drawString(headline, headlineX, headlineY);
 
+        String subtitle = won ? "Great flying, Commander!" : "Better luck next time!";
+        var subtitleFont = new Font("SansSerif", Font.PLAIN, 20);
+        g.setFont(subtitleFont);
+        var subtitleFm = this.getFontMetrics(subtitleFont);
+        g.setColor(new Color(220, 220, 220));
+        g.drawString(subtitle, (BOARD_WIDTH - subtitleFm.stringWidth(subtitle)) / 2, headlineY + 32);
+
         var scoreFont = new Font("Monospaced", Font.BOLD, 22);
         g.setFont(scoreFont);
         var scoreFm = this.getFontMetrics(scoreFont);
         String scoreText = String.format("FINAL SCORE: %06d", score);
         g.setColor(Color.white);
-        g.drawString(scoreText, (BOARD_WIDTH - scoreFm.stringWidth(scoreText)) / 2, headlineY + 46);
+        g.drawString(scoreText, (BOARD_WIDTH - scoreFm.stringWidth(scoreText)) / 2, headlineY + 68);
 
         drawPlayAgainButton(g);
     }
 
-    private void drawPlayAgainButton(Graphics g) {
+    private void drawButton(Graphics g, Rectangle rect, String label, String hint,
+            boolean hovering, Color accent) {
         boolean pulseOn = (frame % 40) < 20;
-        Color fill = hoveringPlayAgain ? new Color(255, 140, 40) : new Color(20, 20, 24, 230);
-        Color border = pulseOn ? new Color(255, 140, 40) : Color.white;
+        Color fill = hovering ? accent : new Color(20, 20, 24, 230);
+        Color border = pulseOn ? accent : Color.white;
 
         var g2 = (Graphics2D) g;
         g2.setColor(fill);
-        g2.fillRoundRect(playAgainButton.x, playAgainButton.y,
-                playAgainButton.width, playAgainButton.height, 14, 14);
+        g2.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 14, 14);
 
         g2.setStroke(new BasicStroke(3));
         g2.setColor(border);
-        g2.drawRoundRect(playAgainButton.x, playAgainButton.y,
-                playAgainButton.width, playAgainButton.height, 14, 14);
+        g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 14, 14);
 
-        var buttonFont = new Font("SansSerif", Font.BOLD, 22);
+        var buttonFont = new Font("SansSerif", Font.BOLD, 20);
         g.setFont(buttonFont);
         var buttonFm = this.getFontMetrics(buttonFont);
-        String text = "PLAY AGAIN";
-        int textX = playAgainButton.x + (playAgainButton.width - buttonFm.stringWidth(text)) / 2;
-        int textY = playAgainButton.y + (playAgainButton.height + buttonFm.getAscent()) / 2 - 4;
-        g.setColor(hoveringPlayAgain ? Color.black : Color.white);
-        g.drawString(text, textX, textY);
+        int textX = rect.x + (rect.width - buttonFm.stringWidth(label)) / 2;
+        int textY = rect.y + (rect.height + buttonFm.getAscent()) / 2 - 4;
+        g.setColor(hovering ? Color.black : Color.white);
+        g.drawString(label, textX, textY);
 
         var hintFont = new Font("Monospaced", Font.PLAIN, 12);
         g.setFont(hintFont);
         var hintFm = this.getFontMetrics(hintFont);
-        String hint = "click or press SPACE";
         g.setColor(Color.gray);
-        g.drawString(hint, (BOARD_WIDTH - hintFm.stringWidth(hint)) / 2,
-                playAgainButton.y + playAgainButton.height + 22);
+        g.drawString(hint, rect.x + (rect.width - hintFm.stringWidth(hint)) / 2,
+                rect.y + rect.height + 22);
+    }
+
+    private void drawPlayAgainButton(Graphics g) {
+        drawButton(g, playAgainButton, "PLAY AGAIN", "click or SPACE",
+                hoveringPlayAgain, new Color(255, 140, 40));
+        drawButton(g, quitButton, "MAIN MENU", "click or ESC",
+                hoveringQuit, new Color(90, 150, 230));
+    }
+
+    private void quitToMenu() {
+        stop();
+        game.loadTitle();
+    }
+
+    private void resetGameState() {
+        frame = 0;
+        deaths = 0;
+        score = 0;
+        message = "Game Over";
+        inGame = true;
+
+        gameInit();
     }
 
     private void restartGame() {
@@ -557,13 +597,7 @@ public class Scene1 extends JPanel {
             System.err.println("Error stopping game-over audio player.");
         }
 
-        frame = 0;
-        deaths = 0;
-        score = 0;
-        message = "Game Over";
-        inGame = true;
-
-        gameInit();
+        resetGameState();
         initAudio();
 
         if (!timer.isRunning()) {
@@ -607,9 +641,9 @@ public class Scene1 extends JPanel {
         }
 
         if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
-            inGame = false;
-            timer.stop();
-            message = "Game won!";
+            // Stage 1 clear - hand off to Stage 2 instead of ending here.
+            game.loadScene3();
+            return;
         }
 
         // player
@@ -642,6 +676,7 @@ public class Scene1 extends JPanel {
                 // Bombs: each enemy owns one reusable Bomb (given codebase's
                 // design). "Destroyed" means "not currently in flight, free
                 // to drop again" - matching how the original template used it.
+                // Only a *living* enemy can drop a new one.
                 int chance = randomizer.nextInt(15);
                 Enemy.Bomb bomb = enemy.getBomb();
 
@@ -650,21 +685,26 @@ public class Scene1 extends JPanel {
                     bomb.setX(enemy.getX());
                     bomb.setY(enemy.getY() + enemy.getImage().getHeight(null) / 2);
                 }
+            }
 
-                if (!bomb.isDestroyed()) {
-                    // Original fell downward (bomb.setY(bomb.getY() + 1));
-                    // flies left instead to match the side-scroll conversion.
-                    // Faster than the enemy's own 1px/frame so it visibly
-                    // separates and reads as a fired projectile instead of
-                    // riding alongside the ship that fired it.
-                    bomb.setX(bomb.getX() - BOMB_SPEED);
+            // A bomb already in flight must keep moving and stay eligible to
+            // despawn (hit the player, or reach the left edge) even if the
+            // enemy that fired it dies in the meantime. Otherwise it freezes
+            // in place forever, since nothing else would ever clear it.
+            Enemy.Bomb bomb = enemy.getBomb();
+            if (!bomb.isDestroyed()) {
+                // Original fell downward (bomb.setY(bomb.getY() + 1));
+                // flies left instead to match the side-scroll conversion.
+                // Faster than the enemy's own 1px/frame so it visibly
+                // separates and reads as a fired projectile instead of
+                // riding alongside the ship that fired it.
+                bomb.setX(bomb.getX() - BOMB_SPEED);
 
-                    if (player.isVisible() && bomb.collidesWith(player)) {
-                        killPlayer();
-                        bomb.setDestroyed(true);
-                    } else if (bomb.getX() < 0) {
-                        bomb.setDestroyed(true);
-                    }
+                if (player.isVisible() && bomb.collidesWith(player)) {
+                    killPlayer();
+                    bomb.setDestroyed(true);
+                } else if (bomb.getX() < 0) {
+                    bomb.setDestroyed(true);
                 }
             }
         }
@@ -803,6 +843,8 @@ public class Scene1 extends JPanel {
             if (!inGame) {
                 if (key == KeyEvent.VK_SPACE || key == KeyEvent.VK_ENTER) {
                     restartGame();
+                } else if (key == KeyEvent.VK_ESCAPE) {
+                    quitToMenu();
                 }
                 return;
             }
@@ -835,6 +877,8 @@ public class Scene1 extends JPanel {
         public void mouseClicked(MouseEvent e) {
             if (!inGame && playAgainButton.contains(e.getPoint())) {
                 restartGame();
+            } else if (!inGame && quitButton.contains(e.getPoint())) {
+                quitToMenu();
             }
         }
     }
@@ -843,9 +887,11 @@ public class Scene1 extends JPanel {
 
         @Override
         public void mouseMoved(MouseEvent e) {
-            boolean nowHovering = !inGame && playAgainButton.contains(e.getPoint());
-            if (nowHovering != hoveringPlayAgain) {
-                hoveringPlayAgain = nowHovering;
+            boolean nowHoveringPlay = !inGame && playAgainButton.contains(e.getPoint());
+            boolean nowHoveringQuit = !inGame && quitButton.contains(e.getPoint());
+            if (nowHoveringPlay != hoveringPlayAgain || nowHoveringQuit != hoveringQuit) {
+                hoveringPlayAgain = nowHoveringPlay;
+                hoveringQuit = nowHoveringQuit;
                 repaint();
             }
         }
