@@ -48,6 +48,8 @@ public class Scene1 extends JPanel {
 
     private int direction = -1;
     private int deaths = 0;
+    private int score = 0;
+    private static final int SCORE_PER_KILL = 100;
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -410,6 +412,7 @@ public class Scene1 extends JPanel {
             drawPlayer(g);
             drawShot(g);
             drawEnemyShots(g);
+            drawHUD(g);
 
         } else {
 
@@ -420,12 +423,26 @@ public class Scene1 extends JPanel {
             gameOver(g);
         }
 
-        // Drawn last so the background image (which is fully opaque)
-        // never paints over it.
-        g.setColor(Color.white);
-        g.drawString("FRAME: " + frame, 10, 10);
-
         Toolkit.getDefaultToolkit().sync();
+    }
+
+    private void drawHUD(Graphics g) {
+        // Semi-transparent bar behind the HUD text so it stays readable
+        // over the starfield/background regardless of what's under it.
+        g.setColor(new Color(0, 0, 0, 140));
+        g.fillRect(0, 0, BOARD_WIDTH, 28);
+
+        var hudFont = new Font("Monospaced", Font.BOLD, 16);
+        g.setFont(hudFont);
+        var fontMetrics = g.getFontMetrics(hudFont);
+
+        g.setColor(Color.white);
+        String scoreText = String.format("SCORE: %06d", score);
+        g.drawString(scoreText, 12, 20);
+
+        String speedText = "SPEED: " + player.getSpeed();
+        int speedWidth = fontMetrics.stringWidth(speedText);
+        g.drawString(speedText, BOARD_WIDTH - speedWidth - 12, 20);
     }
 
     private void gameOver(Graphics g) {
@@ -553,6 +570,7 @@ public class Scene1 extends JPanel {
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemyX, enemyY));
                         deaths++;
+                        score += SCORE_PER_KILL;
                         shot.die();
                         shotsToRemove.add(shot);
                     }

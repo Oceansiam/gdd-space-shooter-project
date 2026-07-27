@@ -47,7 +47,6 @@ public class Global {
     public static final int PLAYER_IMAGE_ROTATION = 0;
     public static final String IMG_SHOT = "src/images/Sega_Genesis___Zero_Wing___Playable_Shot_23_20x16.png";
     public static final String IMG_EXPLOSION = "src/images/explosion.png";
-    public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_BACKGROUND = "src/images/planet_background_level1.png";
 }
