@@ -24,8 +24,16 @@ public class Player extends Sprite {
         var img = ImageUtil.loadRotatedScaled(IMG_PLAYER, SCALE_FACTOR, PLAYER_IMAGE_ROTATION);
         setImage(img);
 
+        resetPosition();
+    }
+
+    /** Moves the player back to its starting spot - used both at game start
+     * and to respawn after losing a life (with lives remaining). */
+    public void resetPosition() {
         setX(START_X);
-        setY(BOARD_HEIGHT / 2 - img.getHeight() / 2);
+        setY(BOARD_HEIGHT / 2 - getImage().getHeight(null) / 2);
+        dx = 0;
+        dy = 0;
     }
 
     public int getSpeed() {

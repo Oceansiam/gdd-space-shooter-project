@@ -13,6 +13,7 @@ import gdd.sprite.Enemy2;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -46,6 +47,7 @@ public class Scene1 extends JPanel {
     private Player player;
     // private Shot shot;
     private BufferedImage backgroundImage;
+    private BufferedImage heartImage;
 
     final int BLOCKHEIGHT = 50;
     final int BLOCKWIDTH = 50;
@@ -56,6 +58,9 @@ public class Scene1 extends JPanel {
     private int deaths = 0;
     private int score = 0;
     private static final int SCORE_PER_KILL = 100;
+    private int lives = MAX_LIVES;
+    private int invulnerableFrames = 0;
+    private int playerPrevY;
     private static final int MAX_ACTIVE_SHOTS = 20;
 
     private boolean inGame = true;
@@ -141,29 +146,75 @@ public class Scene1 extends JPanel {
         // TODO load this from a file
         // Enemies/power-ups now enter from the right edge (x = BOARD_WIDTH)
         // and their varying coordinate is the vertical (y) position.
-        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 100));
-        spawnMap.put(150, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 450));
-        spawnMap.put(200, new SpawnDetails("Alien1", BOARD_WIDTH, 200));
-        spawnMap.put(220, new SpawnDetails("Enemy2", BOARD_WIDTH, 400));
-        spawnMap.put(250, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 150));
-        spawnMap.put(300, new SpawnDetails("Alien1", BOARD_WIDTH, 300));
-        spawnMap.put(320, new SpawnDetails("Enemy2", BOARD_WIDTH, 60));
-        spawnMap.put(350, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 300));
-        spawnMap.put(380, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 500));
-
-        spawnMap.put(400, new SpawnDetails("Alien1", BOARD_WIDTH, 10));
-        spawnMap.put(401, new SpawnDetails("Alien1", BOARD_WIDTH, 90));
-        spawnMap.put(402, new SpawnDetails("Alien1", BOARD_WIDTH, 170));
-        spawnMap.put(403, new SpawnDetails("Alien1", BOARD_WIDTH, 250));
-
-        spawnMap.put(420, new SpawnDetails("Enemy2", BOARD_WIDTH, 400));
-        spawnMap.put(470, new SpawnDetails("Enemy2", BOARD_WIDTH, 60));
-        spawnMap.put(480, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 200));
-
-        spawnMap.put(500, new SpawnDetails("Alien1", BOARD_WIDTH, 330));
-        spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH, 410));
-        spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH, 490));
-        spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH, 570));
+        //
+        // 25 waves, 50 enemies total (matches NUMBER_OF_ALIENS_TO_DESTROY -
+        // clearing all of them is what triggers the move to Stage 2).
+        // Each wave pairs an Alien1 with an Enemy2 flying in an adjacent
+        // lane, one frame apart (two enemies can't share the exact same
+        // spawn frame - spawnMap is keyed by frame number) so they read as
+        // a two-ship formation rather than two unrelated spawns. Verified
+        // overlap-free by simulating the whole schedule before writing it.
+        spawnMap.put(60, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 150));
+        spawnMap.put(100, new SpawnDetails("Alien1", BOARD_WIDTH, 10));
+        spawnMap.put(101, new SpawnDetails("Enemy2", BOARD_WIDTH, 100));
+        spawnMap.put(240, new SpawnDetails("Alien1", BOARD_WIDTH, 100));
+        spawnMap.put(241, new SpawnDetails("Enemy2", BOARD_WIDTH, 190));
+        spawnMap.put(380, new SpawnDetails("Alien1", BOARD_WIDTH, 190));
+        spawnMap.put(381, new SpawnDetails("Enemy2", BOARD_WIDTH, 280));
+        spawnMap.put(410, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 350));
+        spawnMap.put(520, new SpawnDetails("Alien1", BOARD_WIDTH, 280));
+        spawnMap.put(521, new SpawnDetails("Enemy2", BOARD_WIDTH, 370));
+        spawnMap.put(660, new SpawnDetails("Alien1", BOARD_WIDTH, 370));
+        spawnMap.put(661, new SpawnDetails("Enemy2", BOARD_WIDTH, 460));
+        spawnMap.put(760, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 550));
+        spawnMap.put(800, new SpawnDetails("Alien1", BOARD_WIDTH, 460));
+        spawnMap.put(801, new SpawnDetails("Enemy2", BOARD_WIDTH, 550));
+        spawnMap.put(940, new SpawnDetails("Alien1", BOARD_WIDTH, 10));
+        spawnMap.put(941, new SpawnDetails("Enemy2", BOARD_WIDTH, 100));
+        spawnMap.put(1080, new SpawnDetails("Alien1", BOARD_WIDTH, 100));
+        spawnMap.put(1081, new SpawnDetails("Enemy2", BOARD_WIDTH, 190));
+        spawnMap.put(1110, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 250));
+        spawnMap.put(1220, new SpawnDetails("Alien1", BOARD_WIDTH, 190));
+        spawnMap.put(1221, new SpawnDetails("Enemy2", BOARD_WIDTH, 280));
+        spawnMap.put(1360, new SpawnDetails("Alien1", BOARD_WIDTH, 280));
+        spawnMap.put(1361, new SpawnDetails("Enemy2", BOARD_WIDTH, 370));
+        spawnMap.put(1460, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 450));
+        spawnMap.put(1500, new SpawnDetails("Alien1", BOARD_WIDTH, 370));
+        spawnMap.put(1501, new SpawnDetails("Enemy2", BOARD_WIDTH, 460));
+        spawnMap.put(1640, new SpawnDetails("Alien1", BOARD_WIDTH, 460));
+        spawnMap.put(1641, new SpawnDetails("Enemy2", BOARD_WIDTH, 550));
+        spawnMap.put(1780, new SpawnDetails("Alien1", BOARD_WIDTH, 10));
+        spawnMap.put(1781, new SpawnDetails("Enemy2", BOARD_WIDTH, 100));
+        spawnMap.put(1810, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 150));
+        spawnMap.put(1920, new SpawnDetails("Alien1", BOARD_WIDTH, 100));
+        spawnMap.put(1921, new SpawnDetails("Enemy2", BOARD_WIDTH, 190));
+        spawnMap.put(2060, new SpawnDetails("Alien1", BOARD_WIDTH, 190));
+        spawnMap.put(2061, new SpawnDetails("Enemy2", BOARD_WIDTH, 280));
+        spawnMap.put(2160, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 350));
+        spawnMap.put(2200, new SpawnDetails("Alien1", BOARD_WIDTH, 280));
+        spawnMap.put(2201, new SpawnDetails("Enemy2", BOARD_WIDTH, 370));
+        spawnMap.put(2340, new SpawnDetails("Alien1", BOARD_WIDTH, 370));
+        spawnMap.put(2341, new SpawnDetails("Enemy2", BOARD_WIDTH, 460));
+        spawnMap.put(2480, new SpawnDetails("Alien1", BOARD_WIDTH, 460));
+        spawnMap.put(2481, new SpawnDetails("Enemy2", BOARD_WIDTH, 550));
+        spawnMap.put(2510, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 550));
+        spawnMap.put(2620, new SpawnDetails("Alien1", BOARD_WIDTH, 10));
+        spawnMap.put(2621, new SpawnDetails("Enemy2", BOARD_WIDTH, 100));
+        spawnMap.put(2760, new SpawnDetails("Alien1", BOARD_WIDTH, 100));
+        spawnMap.put(2761, new SpawnDetails("Enemy2", BOARD_WIDTH, 190));
+        spawnMap.put(2860, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 250));
+        spawnMap.put(2900, new SpawnDetails("Alien1", BOARD_WIDTH, 190));
+        spawnMap.put(2901, new SpawnDetails("Enemy2", BOARD_WIDTH, 280));
+        spawnMap.put(3040, new SpawnDetails("Alien1", BOARD_WIDTH, 280));
+        spawnMap.put(3041, new SpawnDetails("Enemy2", BOARD_WIDTH, 370));
+        spawnMap.put(3180, new SpawnDetails("Alien1", BOARD_WIDTH, 370));
+        spawnMap.put(3181, new SpawnDetails("Enemy2", BOARD_WIDTH, 460));
+        spawnMap.put(3210, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH, 450));
+        spawnMap.put(3320, new SpawnDetails("Alien1", BOARD_WIDTH, 460));
+        spawnMap.put(3321, new SpawnDetails("Enemy2", BOARD_WIDTH, 550));
+        spawnMap.put(3460, new SpawnDetails("Alien1", BOARD_WIDTH, 10));
+        spawnMap.put(3461, new SpawnDetails("Enemy2", BOARD_WIDTH, 100));
+        spawnMap.put(3560, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH, 150));
     }
 
     private void initBoard() {
@@ -213,6 +264,7 @@ public class Scene1 extends JPanel {
 
         // Loaded synchronously to avoid the macOS getScaledInstance crash.
         backgroundImage = gdd.ImageUtil.load(IMG_BACKGROUND);
+        heartImage = gdd.ImageUtil.load(IMG_HEART);
 
         // for (int i = 0; i < 4; i++) {
         // for (int j = 0; j < 6; j++) {
@@ -349,27 +401,14 @@ public class Scene1 extends JPanel {
         }
     }
 
-    private void killPlayer() {
-        if (player.isDying() || !player.isVisible()) {
-            return; // already handled this frame
-        }
-        player.setImage(gdd.ImageUtil.loadScaled(IMG_EXPLOSION, SCALE_FACTOR));
-        player.setDying(true);
-        message = "Game Over";
-
-        try {
-            if (audioPlayer != null) {
-                audioPlayer.stop(); // stop the background gameplay music
-            }
-        } catch (Exception ex) {
-            System.out.println("Error stopping background music.");
-            ex.printStackTrace();
-        }
-
+    private void playEnemyDeathSound() {
+        // Off-thread for the same reason as every other sound in this game:
+        // opening a Clip is blocking I/O, and this can fire many times in
+        // quick succession (multiple enemies dying close together).
         new Thread(() -> {
             try {
-                gameOverAudioPlayer = new AudioPlayer("src/audio/Game Over.wav", false);
-                gameOverAudioPlayer.play();
+                AudioPlayer deathSound = new AudioPlayer("src/audio/SFX 12.wav", false);
+                deathSound.play();
             } catch (Exception ex) {
                 System.out.println("Error with playing sound.");
                 ex.printStackTrace();
@@ -377,9 +416,54 @@ public class Scene1 extends JPanel {
         }).start();
     }
 
+    private void killPlayer() {
+        if (player.isDying() || !player.isVisible() || invulnerableFrames > 0) {
+            return; // already handled this frame, or currently invulnerable
+        }
+
+        lives--;
+
+        if (lives <= 0) {
+            // Out of lives - this is a real game over.
+            player.setImage(gdd.ImageUtil.loadScaled(IMG_EXPLOSION, SCALE_FACTOR));
+            player.setDying(true);
+            message = "Game Over";
+
+            try {
+                if (audioPlayer != null) {
+                    audioPlayer.stop(); // stop the background gameplay music
+                }
+            } catch (Exception ex) {
+                System.out.println("Error stopping background music.");
+                ex.printStackTrace();
+            }
+
+            new Thread(() -> {
+                try {
+                    gameOverAudioPlayer = new AudioPlayer("src/audio/Game Over.wav", false);
+                    gameOverAudioPlayer.play();
+                } catch (Exception ex) {
+                    System.out.println("Error with playing sound.");
+                    ex.printStackTrace();
+                }
+            }).start();
+        } else {
+            // Still have lives left: lose one, respawn, brief invulnerability
+            // instead of ending the game.
+            explosions.add(new Explosion(player.getX(), player.getY()));
+            player.resetPosition();
+            invulnerableFrames = RESPAWN_INVULNERABLE_FRAMES;
+        }
+    }
+
     private void drawPlayer(Graphics g) {
 
-        if (player.isVisible()) {
+        // Flicker while invulnerable (skip every other few frames) as
+        // visual feedback that a hit was just taken and can't happen again
+        // immediately.
+        boolean flickerHidden = invulnerableFrames > 0 && (invulnerableFrames / 4) % 2 == 0;
+
+        if (player.isVisible() && !flickerHidden) {
 
             g.drawImage(player.getImage(), player.getX(), player.getY(), this);
         }
@@ -415,7 +499,7 @@ public class Scene1 extends JPanel {
         // Semi-transparent bar behind the HUD text so it stays readable
         // over the starfield/background regardless of what's under it.
         g.setColor(new Color(0, 0, 0, 140));
-        g.fillRect(0, 0, BOARD_WIDTH, 28);
+        g.fillRect(0, 0, BOARD_WIDTH, 52);
 
         var hudFont = new Font("Monospaced", Font.BOLD, 16);
         g.setFont(hudFont);
@@ -432,6 +516,23 @@ public class Scene1 extends JPanel {
         String speedText = "SPEED: " + player.getSpeed();
         int speedWidth = fontMetrics.stringWidth(speedText);
         g.drawString(speedText, BOARD_WIDTH - speedWidth - 12, 20);
+
+        // Lives, drawn as a row of hearts: filled for remaining lives,
+        // faded for lost ones, so you can see both at a glance.
+        if (heartImage != null) {
+            int heartSize = 18;
+            int heartGap = 4;
+            var g2 = (Graphics2D) g;
+            for (int i = 0; i < MAX_LIVES; i++) {
+                int hx = 12 + i * (heartSize + heartGap);
+                int hy = 28;
+                float alpha = i < lives ? 1.0f : 0.25f;
+                var oldComposite = g2.getComposite();
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                g2.drawImage(heartImage, hx, hy, heartSize, heartSize, this);
+                g2.setComposite(oldComposite);
+            }
+        }
     }
 
     private void drawExplosions(Graphics g) {
@@ -490,7 +591,7 @@ public class Scene1 extends JPanel {
         // Drawn last so the background image (which is fully opaque)
         // never paints over it. Sits below the HUD bar so they don't collide.
         g.setColor(Color.white);
-        g.drawString("FRAME: " + frame, 10, 45);
+        g.drawString("FRAME: " + frame, 10, 68);
 
         Toolkit.getDefaultToolkit().sync();
     }
@@ -582,6 +683,8 @@ public class Scene1 extends JPanel {
         frame = 0;
         deaths = 0;
         score = 0;
+        lives = MAX_LIVES;
+        invulnerableFrames = 0;
         message = "Game Over";
         inGame = true;
 
@@ -609,6 +712,9 @@ public class Scene1 extends JPanel {
 
     private void update() {
 
+        if (invulnerableFrames > 0) {
+            invulnerableFrames--;
+        }
 
         // Check enemy spawn
         // TODO this approach can only spawn one enemy at a frame
@@ -647,6 +753,7 @@ public class Scene1 extends JPanel {
         }
 
         // player
+        playerPrevY = player.getY();
         player.act();
 
         // Power-ups
@@ -671,6 +778,7 @@ public class Scene1 extends JPanel {
                     enemy.setDying(true);
                     explosions.add(new Explosion(enemy.getX(), enemy.getY()));
                     deaths++;
+                    playEnemyDeathSound();
                 }
 
                 // Bombs: each enemy owns one reusable Bomb (given codebase's
@@ -700,7 +808,22 @@ public class Scene1 extends JPanel {
                 // riding alongside the ship that fired it.
                 bomb.setX(bomb.getX() - BOMB_SPEED);
 
-                if (player.isVisible() && bomb.collidesWith(player)) {
+                // Swept collision instead of a padded box: covers the same
+                // "fast player, thin bomb" tunneling case, but only counts
+                // it as a hit if the player's actual flight path this frame
+                // crossed the bomb - not an inflated zone around it. A path
+                // that visibly curves around the bomb (like screenshotted)
+                // now correctly stays safe.
+                int playerCurY = player.getY();
+                int playerMinY = Math.min(playerPrevY, playerCurY);
+                int playerMaxY = Math.max(playerPrevY, playerCurY) + player.getImage().getHeight(null);
+                int bombW = bomb.getImage().getWidth(null);
+                int bombH = bomb.getImage().getHeight(null);
+                boolean xOverlap = bomb.getX() < player.getX() + player.getImage().getWidth(null)
+                        && bomb.getX() + bombW > player.getX();
+                boolean sweptYOverlap = bomb.getY() < playerMaxY && bomb.getY() + bombH > playerMinY;
+
+                if (player.isVisible() && xOverlap && sweptYOverlap) {
                     killPlayer();
                     bomb.setDestroyed(true);
                 } else if (bomb.getX() < 0) {
@@ -720,13 +843,17 @@ public class Scene1 extends JPanel {
                     int enemyX = enemy.getX();
                     int enemyY = enemy.getY();
 
-                    if (shot.collidesWith(enemy)) {
+                    // Padded to fix tunneling: the shot moves 20px/frame,
+                    // close to a regular enemy's own ~20px width, so an
+                    // unpadded check can miss it between frames entirely.
+                    if (shot.collidesWith(enemy, 10, 4)) {
 
                         enemy.setImage(gdd.ImageUtil.loadScaled(IMG_EXPLOSION, SCALE_FACTOR));
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemyX, enemyY));
                         deaths++;
                         score += SCORE_PER_KILL;
+                        playEnemyDeathSound();
                         shot.die();
                         shotsToRemove.add(shot);
                     }

@@ -62,13 +62,31 @@ abstract public class Sprite {
     }
 
     public boolean collidesWith(Sprite other) {
+        return collidesWith(other, 0, 0);
+    }
+
+    /**
+     * Same as collidesWith(), but inflates this sprite's hitbox by padX/padY
+     * on each side first. Needed for fast, thin objects like bullets: a shot
+     * moving 20px/frame with only a 15px-wide hitbox can jump clean past a
+     * ~20px-wide enemy between two frames without either frame's exact
+     * position ever overlapping it - the classic "tunneling" bug. Padding
+     * the hitbox by roughly the per-frame travel distance closes that gap
+     * without needing full swept collision detection.
+     */
+    public boolean collidesWith(Sprite other, int padX, int padY) {
         if (other == null || !this.isVisible() || !other.isVisible()) {
             return false;
         }
-        return this.getX() < other.getX() + other.getImage().getWidth(null)
-                && this.getX() + this.getImage().getWidth(null) > other.getX()
-                && this.getY() < other.getY() + other.getImage().getHeight(null)
-                && this.getY() + this.getImage().getHeight(null) > other.getY();
+        int thisX = this.getX() - padX;
+        int thisY = this.getY() - padY;
+        int thisW = this.getImage().getWidth(null) + padX * 2;
+        int thisH = this.getImage().getHeight(null) + padY * 2;
+
+        return thisX < other.getX() + other.getImage().getWidth(null)
+                && thisX + thisW > other.getX()
+                && thisY < other.getY() + other.getImage().getHeight(null)
+                && thisY + thisH > other.getY();
     }
 
     public void die() {

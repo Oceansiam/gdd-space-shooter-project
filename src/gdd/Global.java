@@ -28,7 +28,7 @@ public class Global {
     public static final int ALIEN_GAP = 30; // Gap between aliens
 
     public static final int GO_DOWN = 30; // Doubled from 15
-    public static final int NUMBER_OF_ALIENS_TO_DESTROY = 24;
+    public static final int NUMBER_OF_ALIENS_TO_DESTROY = 50; // Stage 1 -> Stage 2, and Stage 2 -> boss
     public static final int CHANCE = 5;
     public static final int DELAY = 17;
     public static final int PLAYER_WIDTH = 30; // Doubled from 15
@@ -68,6 +68,12 @@ public class Global {
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
+    public static final String IMG_HEART = "src/images/heart.png";
+
+    public static final int MAX_LIVES = 5;
+    // Brief grace period after respawning where the player can't be hit
+    // again immediately (classic "just got hit" invulnerability window).
+    public static final int RESPAWN_INVULNERABLE_FRAMES = 90; // ~1.5s at 60fps
     public static final String IMG_BACKGROUND = "src/images/planet_background_level1.png"; //stage 1
     public static final String IMG_BACKGROUND2 = "src/images/background2.png"; // stage 2
     public static final String IMG_BACKGROUND3 = "src/images/Nebula_background.png"; // stage 1 diff map

@@ -52,10 +52,7 @@ public class Game extends JFrame  {
         repaint();
     }
 
-    // Note: named to match the existing loadScene1()/loadScene2() numbering
-    // above (which is really "screen 1"/"screen 2" rather than matching the
-    // Scene1/Scene2 class names) - this one loads the Scene2 object, i.e.
-    // Stage 2.
+// scene 2 wil start after screen 3 is done
     public void loadScene3() {
         getContentPane().removeAll();
         add(scene2);
