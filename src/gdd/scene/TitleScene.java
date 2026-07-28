@@ -11,6 +11,7 @@ import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -53,6 +54,15 @@ public class TitleScene extends JPanel {
             BOARD_WIDTH / 2 - 110, 420, 220, 64);
     private boolean hoveringStart = false;
     private boolean listenersAdded = false;
+
+    // The board is drawn at a fixed BOARD_WIDTH x BOARD_HEIGHT virtual
+    // resolution, then scaled+letterboxed to fill however big this panel
+    // actually is (e.g. a full-screen window) - these are recomputed each
+    // paintComponent() and used to translate real mouse coordinates back
+    // into that virtual space for button hit-testing.
+    private double renderScale = 1;
+    private int renderOffsetX = 0;
+    private int renderOffsetY = 0;
 
     // Star positions/phases are precomputed once so the field twinkles in
     // place instead of re-randomizing (and jumping around) every frame.
@@ -133,7 +143,25 @@ public class TitleScene extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        doDrawing(g);
+        var g2 = (Graphics2D) g;
+        g2.setColor(Color.black);
+        g2.fillRect(0, 0, getWidth(), getHeight());
+
+        renderScale = Math.min(getWidth() / (double) BOARD_WIDTH, getHeight() / (double) BOARD_HEIGHT);
+        renderOffsetX = (int) ((getWidth() - BOARD_WIDTH * renderScale) / 2);
+        renderOffsetY = (int) ((getHeight() - BOARD_HEIGHT * renderScale) / 2);
+
+        g2.translate(renderOffsetX, renderOffsetY);
+        g2.scale(renderScale, renderScale);
+
+        doDrawing(g2);
+    }
+
+    /** Maps a real mouse point (e.g. from a scaled-up full-screen window) back to virtual board coordinates. */
+    private Point toVirtual(Point real) {
+        return new Point(
+                (int) ((real.x - renderOffsetX) / renderScale),
+                (int) ((real.y - renderOffsetY) / renderScale));
     }
 
     private void doDrawing(Graphics g) {
@@ -335,7 +363,7 @@ public class TitleScene extends JPanel {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            if (startButton.contains(e.getPoint())) {
+            if (startButton.contains(toVirtual(e.getPoint()))) {
                 startGame();
             }
         }
@@ -345,7 +373,7 @@ public class TitleScene extends JPanel {
 
         @Override
         public void mouseMoved(MouseEvent e) {
-            boolean nowHovering = startButton.contains(e.getPoint());
+            boolean nowHovering = startButton.contains(toVirtual(e.getPoint()));
             if (nowHovering != hoveringStart) {
                 hoveringStart = nowHovering;
                 repaint();

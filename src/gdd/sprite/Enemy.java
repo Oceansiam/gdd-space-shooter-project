@@ -17,7 +17,7 @@ public class Enemy extends Sprite {
             sharedAnimationFrames = new Image[ENEMY_ANIM_FRAME_COUNT];
             for (int i = 0; i < ENEMY_ANIM_FRAME_COUNT; i++) {
                 String path = String.format("%sframe_%02d.png", IMG_ENEMY_ANIM_FOLDER, i);
-                sharedAnimationFrames[i] = ImageUtil.loadRotatedScaled(path, 1, ENEMY_IMAGE_ROTATION);
+                sharedAnimationFrames[i] = ImageUtil.loadRotatedScaled(path, ENEMY_ANIM_SCALE, ENEMY_IMAGE_ROTATION);
             }
         }
         return sharedAnimationFrames;

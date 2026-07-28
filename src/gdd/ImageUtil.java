@@ -1,5 +1,7 @@
 package gdd;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -114,5 +116,68 @@ public final class ImageUtil {
     /** Convenience: load then scale. */
     public static BufferedImage loadScaled(String path, int factor) {
         return scale(load(path), factor);
+    }
+
+    /**
+     * Load and scale, preserving aspect ratio, so the result fits within
+     * maxW x maxH. Useful for dropping in sprite-sheet crops of varying
+     * native sizes while still matching a fixed on-screen footprint (e.g.
+     * ALIEN_WIDTH x ALIEN_HEIGHT) that other code assumes for collisions.
+     */
+    public static BufferedImage loadScaledToFit(String path, int maxW, int maxH) {
+        BufferedImage src = load(path);
+        double factor = Math.min((double) maxW / src.getWidth(), (double) maxH / src.getHeight());
+        int w = Math.max(1, (int) Math.round(src.getWidth() * factor));
+        int h = Math.max(1, (int) Math.round(src.getHeight() * factor));
+
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(src, 0, 0, w, h, null);
+        g.dispose();
+        return out;
+    }
+
+    /**
+     * Draw a simple heart shape (two circles + a triangle) at the given
+     * pixel size and color. Used for Stage 2's life/heart HUD icons and the
+     * Heart Up power-up sprite - generated in code rather than sourced as
+     * an image file, since a plain heart icon carries no art ownership.
+     */
+    public static BufferedImage createHeartIcon(int size, Color color) {
+        BufferedImage out = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setColor(color);
+
+        int r = size / 4;
+        g.fillOval(0, 0, r * 2, r * 2);
+        g.fillOval(size - r * 2, 0, r * 2, r * 2);
+
+        int[] xs = {0, size, size / 2};
+        int[] ys = {r, r, size};
+        g.fillPolygon(xs, ys, 3);
+
+        g.dispose();
+        return out;
+    }
+
+    /**
+     * Draw a color tint over only the existing (non-transparent) pixels of
+     * src, at the given strength (0-1). Used to synthesize a second "power
+     * pulse" animation frame for art that only has one clean frame.
+     */
+    public static BufferedImage tint(BufferedImage src, Color color, float strength) {
+        BufferedImage out = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        g.drawImage(src, 0, 0, null);
+        // SRC_ATOP: the fill only lands where the destination (src) already
+        // has alpha, so transparent background stays transparent.
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, strength));
+        g.setColor(color);
+        g.fillRect(0, 0, src.getWidth(), src.getHeight());
+        g.dispose();
+        return out;
     }
 }
